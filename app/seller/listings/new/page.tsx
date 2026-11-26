@@ -7,6 +7,7 @@ import {
 	FieldGroup,
 	FieldLabel
 } from '@/components/ui/field'
+import { API_URL } from '@/lib/api-url'
 import { Input } from '@/components/ui/input'
 import { useAuthStore } from '@/store/authStore'
 import { useRouter } from 'next/navigation'
@@ -26,6 +27,8 @@ export default function CreateNewListing() {
 	const [carBrand, setCarBrand] = useState('')
 	const [carModel, setCarModel] = useState('')
 	const [carYear, setCarYear] = useState('')
+	const [carVin, setCarVin] = useState('')
+	const [currency, setCurrency] = useState('')
 	const [carPrice, setCarPrice] = useState('')
 	const [carCity, setCarCity] = useState('')
 	const [carDescription, setCarDescription] = useState('')
@@ -58,13 +61,6 @@ export default function CreateNewListing() {
 		e.preventDefault()
 		setError('')
 
-		const sellerId = localStorage.getItem('sellerId')
-
-		if (!sellerId) {
-			setError('Seller profile was not found')
-			return
-		}
-
 		if (!token) {
 			setError('You must be logged in')
 			return
@@ -72,7 +68,16 @@ export default function CreateNewListing() {
 		try {
 			setLoading(true)
 
-			const carResponse = await fetch('http://localhost:5107/api/car', {
+			const sellerResponse = await fetch(`${API_URL}/seller/me`, {
+				headers: { Authorization: `Bearer ${token}` }
+			})
+			if (sellerResponse.status === 404) {
+				router.push('/seller/dashboard')
+				return
+			}
+			if (!sellerResponse.ok) throw new Error('Could not verify your seller profile')
+
+			const carResponse = await fetch(`${API_URL}/api/cars`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -82,25 +87,26 @@ export default function CreateNewListing() {
 					brand: carBrand,
 					model: carModel,
 					year: Number(carYear),
-					price: Number(carPrice)
+					price: Number(carPrice),
+					vin: carVin.trim().toUpperCase(),
+					currency: currency.trim().toUpperCase()
 				})
 			})
 			if (!carResponse.ok) {
 				throw new Error('Failed to create car')
 			}
-			const carId = await carResponse.text()
+			const carId = (await carResponse.json()) as string
 
 			const formData = new FormData()
-			formData.append('sellerId', sellerId)
 			formData.append('carId', carId)
 			formData.append('city', carCity)
 			formData.append('description', carDescription)
 
 			images.forEach(image => {
-				formData.append('carImages', image)
+				formData.append('photos', image)
 			})
 
-			const listingResponse = await fetch('http://localhost:5107/api/listing', {
+			const listingResponse = await fetch(`${API_URL}/api/listing`, {
 				method: 'POST',
 				headers: {
 					Authorization: `Bearer ${token}`
@@ -162,6 +168,14 @@ export default function CreateNewListing() {
 									onChange={e => setCarYear(e.target.value)}
 									required
 								/>
+							</Field>
+							<Field>
+								<FieldLabel htmlFor='carVin'>VIN</FieldLabel>
+								<Input id='carVin' minLength={17} maxLength={17} value={carVin} onChange={e => setCarVin(e.target.value)} required />
+							</Field>
+							<Field>
+								<FieldLabel htmlFor='currency'>Currency code</FieldLabel>
+								<Input id='currency' placeholder='EUR' pattern='[A-Za-z]{3}' maxLength={3} value={currency} onChange={e => setCurrency(e.target.value)} required />
 							</Field>
 							<Field>
 								<FieldLabel htmlFor='carPrice'>Price</FieldLabel>

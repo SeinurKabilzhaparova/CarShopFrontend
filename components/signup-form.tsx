@@ -16,13 +16,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import z from 'zod'
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue
-} from './ui/select'
 
 type SignUpData = z.infer<typeof SignUpFormSchema>
 
@@ -33,22 +26,18 @@ export default function SignupForm({
 	const {
 		register,
 		handleSubmit,
-		setValue,
+		setError,
 		formState: { errors, isSubmitting }
 	} = useForm<SignUpData>({ resolver: zodResolver(SignUpFormSchema) })
 
 	const Register = useAuthStore(x => x.Register)
 	const router = useRouter()
-	const roles = [
-		{ value: 'customer', label: 'Customer - want to Buy a car' },
-		{ value: 'privateSeller', label: 'Private Seller - want to Sell a car' }
-	]
 	async function onSubmit(data: SignUpData) {
 		try {
-			await Register(data.email, data.password, data.role)
+			await Register(data.email, data.password)
 			router.push('/inventory')
-		} catch (error: unknown) {
-			console.log(error)
+		} catch {
+			setError('root', { message: 'Could not create your account. Please try again.' })
 		}
 	}
 	return (
@@ -85,26 +74,7 @@ export default function SignupForm({
 						{errors.password && <p className='text-sm text-destructive mt-1'>{errors.password.message}</p>}
 					</Field>
 					<Field>
-						<FieldLabel htmlFor='role'>Role</FieldLabel>
-						<Select
-							onValueChange={value =>
-								setValue('role', value as SignUpData['role'])
-							}
-						>
-							<SelectTrigger id='role' className='h-12'>
-								<SelectValue placeholder='Select role' />
-							</SelectTrigger>
-							<SelectContent>
-								{roles.map(r => (
-									<SelectItem key={r.value} value={r.value}>
-										{r.label}
-									</SelectItem>
-								))}
-							</SelectContent>
-						</Select>
-						{errors.role && <p className='text-sm text-destructive mt-1'>{errors.role.message}</p>}
-					</Field>
-					<Field>
+						{errors.root && <p role='alert' className='text-sm text-destructive'>{errors.root.message}</p>}
 						<Button type='submit' disabled={isSubmitting} size='lg' className='w-full'>
 							{isSubmitting ? 'Creating...' : 'Create Account'}
 						</Button>

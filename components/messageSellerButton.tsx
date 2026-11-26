@@ -1,5 +1,7 @@
 'use client'
 
+import { API_URL } from '@/lib/api-url'
+
 import { useChatStore } from '@/store/chatStore'
 import { useAuthStore } from '@/store/authStore'
 import { useRouter } from 'next/navigation'
@@ -18,7 +20,7 @@ interface Seller {
 	companyName: string
 }
 async function fetchSellerById(sellerId: string):Promise<Seller>{
-	const response = await fetch(`http://localhost:5107/seller/${sellerId}`)
+	const response = await fetch(`${API_URL}/seller/${sellerId}`)
 
 	if(!response.ok)
 		throw new Error('Failed to load seller')

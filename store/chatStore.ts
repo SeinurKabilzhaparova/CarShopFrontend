@@ -1,8 +1,7 @@
+import { API_URL } from '@/lib/api-url'
 import * as signalR from '@microsoft/signalr'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5107'
 
 export interface ChatMsg {
 	id: string

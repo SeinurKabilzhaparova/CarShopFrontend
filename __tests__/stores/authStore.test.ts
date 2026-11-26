@@ -75,3 +75,19 @@ describe('Logout tests', () => {
 		expect(useAuthStore.getState().token).toBeNull()
 	})
 })
+
+describe('Registration', () => {
+	it('sends credentials without a buyer or seller role', async () => {
+		const token = createMockJwt('5', 'test@mail.com', 'customer')
+		vi.mocked(fetch).mockResolvedValueOnce({ ok: true, text: async () => token } as Response)
+
+		await useAuthStore.getState().Register('test@mail.com', 'password')
+
+		const request = vi.mocked(fetch).mock.calls[0][1]
+		expect([...(request?.body as FormData).entries()]).toEqual([
+			['email', 'test@mail.com'],
+			['password', 'password']
+		])
+		expect(useAuthStore.getState().token).toBe(token)
+	})
+})

@@ -1,5 +1,7 @@
 'use client'
 
+import { API_URL, getListingPhotoUrl } from '@/lib/api-url'
+
 import { Button } from '@/components/ui/button'
 import {
 	Field,
@@ -11,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { EditListingSchema, FieldErrors, ParseZodErrors } from '@/lib/schemas'
 import { useAuthStore } from '@/store/authStore'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import z from 'zod'
 
 interface ApiListing {
@@ -36,7 +38,7 @@ interface ApiListing {
 type EditListingFields = z.infer<typeof EditListingSchema>
 
 async function getListing(id: string): Promise<ApiListing> {
-	const response = await fetch(`http://localhost:5107/api/listing/${id}`)
+	const response = await fetch(`${API_URL}/api/listing/${id}`)
 
 	if (!response.ok) throw new Error('Failed to load listing')
 
@@ -47,14 +49,10 @@ export default function EditListingForm({ listingId }: { listingId: string }) {
 	const router = useRouter()
 	const token = useAuthStore(x => x.token)
 
-	const fileInputRef = useRef<HTMLInputElement | null>(null)
-
 	const [listing, setListing] = useState<ApiListing | null>(null)
 	const [city, setCity] = useState('')
 	const [description, setDescription] = useState('')
 	const [existingImages, setExistingImages] = useState<string[]>([])
-	const [, setNewImages] = useState<File[]>([])
-	const [newPreviews, setNewPreviews] = useState<string[]>([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
 
@@ -79,24 +77,6 @@ export default function EditListingForm({ listingId }: { listingId: string }) {
 		loadListing()
 	}, [listingId])
 
-	function handleNewImages(e: React.ChangeEvent<HTMLInputElement>) {
-		const files = Array.from(e.target.files ?? [])
-
-		setNewImages(prev => [...prev, ...files])
-
-		const previews = files.map(file => URL.createObjectURL(file))
-		setNewPreviews(prev => [...prev, ...previews])
-	}
-
-	function removeExistingImage(index: number) {
-		setExistingImages(prev => prev.filter((_, i) => i !== index))
-	}
-
-	function removeNewImage(index: number) {
-		setNewImages(prev => prev.filter((_, i) => i !== index))
-		setNewPreviews(prev => prev.filter((_, i) => i !== index))
-	}
-
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault()
 		const result = EditListingSchema.safeParse({
@@ -117,7 +97,7 @@ export default function EditListingForm({ listingId }: { listingId: string }) {
 
 		try {
 			const response = await fetch(
-				`http://localhost:5107/api/listing/${listingId}`,
+				`${API_URL}/api/listing/${listingId}`,
 				{
 					method: 'PUT',
 					headers: {
@@ -208,73 +188,20 @@ export default function EditListingForm({ listingId }: { listingId: string }) {
 								<p className='text-sm text-muted-foreground'>No photos yet</p>
 							) : (
 								<div className='grid grid-cols-3 gap-4'>
-									{existingImages.map((image, index) => (
+									{existingImages.map(image => (
 										<div key={image} className='relative'>
 											<img
-												src={image}
+												src={getListingPhotoUrl(image)}
 												alt='Car photo'
 												className='h-32 w-full object-cover'
 											/>
 
-											<Button
-												type='button'
-												variant='destructive'
-												size='sm'
-												className='absolute right-2 top-2'
-												onClick={() => removeExistingImage(index)}
-											>
-												Delete
-											</Button>
 										</div>
 									))}
 								</div>
 							)}
 						</Field>
 
-						<Field className='gap-4'>
-							<FieldLabel>Add New Photos</FieldLabel>
-
-							<input
-								ref={fileInputRef}
-								type='file'
-								accept='image/*'
-								multiple
-								hidden
-								onChange={handleNewImages}
-							/>
-
-							<Button
-								type='button'
-								variant='outline'
-								onClick={() => fileInputRef.current?.click()}
-							>
-								Add Photos
-							</Button>
-
-							{newPreviews.length > 0 && (
-								<div className='mt-4 grid grid-cols-3 gap-4'>
-									{newPreviews.map((preview, index) => (
-										<div key={preview} className='relative'>
-											<img
-												src={preview}
-												alt='New preview'
-												className='h-32 w-full object-cover'
-											/>
-
-											<Button
-												type='button'
-												variant='destructive'
-												size='sm'
-												className='absolute right-2 top-2'
-												onClick={() => removeNewImage(index)}
-											>
-												Delete
-											</Button>
-										</div>
-									))}
-								</div>
-							)}
-						</Field>
 
 						<Field>
 							<Button type='submit' size='lg' className='w-full'>Save Changes</Button>

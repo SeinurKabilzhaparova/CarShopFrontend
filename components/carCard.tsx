@@ -1,4 +1,5 @@
 import { Car, formatPrice } from '@/lib/cars'
+import { API_URL } from '@/lib/api-url'
 import Image from 'next/image'
 import Link from 'next/link'
 import AddToCartButton from './addToCartButton'
@@ -15,6 +16,7 @@ export default function CarCard({ car }: props) {
 				{car.image ? (
 					<Image
 						src={car.image}
+						unoptimized={car.image.startsWith(`${API_URL}/uploads/`)}
 						alt={`${car.brand} ${car.name}`}
 						fill
 						className='object-cover transition-transform duration-700 group-hover:scale-105'
@@ -48,7 +50,7 @@ export default function CarCard({ car }: props) {
 				</p>
 				<div className='mt-auto pt-5'>
 					<div className='flex items-end justify-between border-t border-border pt-4'>
-						<p className='text-xl font-bold tracking-tight'>{formatPrice(car.price)}</p>
+						<p className='text-xl font-bold tracking-tight'>{formatPrice(car.price, car.currency)}</p>
 						<div className='flex items-center gap-2'>
 							<Button variant='outline' size='sm' className='h-9 px-4'>
 								Buy

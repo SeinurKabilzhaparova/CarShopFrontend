@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { formatPrice } from '@/lib/cars'
+import { API_URL } from '@/lib/api-url'
 import { useCartStore } from '@/store/cartStore'
 import { ShoppingBag, Trash2, X } from 'lucide-react'
 import Image from 'next/image'
@@ -14,7 +15,11 @@ interface CartProps {
 export default function Cart({ onClose }: CartProps) {
 	const items = useCartStore(t => t.items)
 	const removeFromCart = useCartStore(t => t.removeFromCart)
-	const totalPrice = useCartStore(t => t.totalPrice)
+	const totals = new Map<string, number>()
+	for (const car of items) {
+		const currency = car.currency ?? 'USD'
+		totals.set(currency, (totals.get(currency) ?? 0) + car.price)
+	}
 
 	return createPortal(
 		<div className='fixed inset-0 z-50 flex justify-end'>
@@ -50,6 +55,7 @@ export default function Cart({ onClose }: CartProps) {
 										{car.image ? (
 											<Image
 												src={car.image}
+						unoptimized={car.image.startsWith(`${API_URL}/uploads/`)}
 												alt={car.brand}
 												width={160}
 												height={100}
@@ -69,7 +75,7 @@ export default function Cart({ onClose }: CartProps) {
 												{car.year}
 											</p>
 											<h4 className='text-base font-bold mt-1'>
-												{formatPrice(car.price)}
+												{formatPrice(car.price, car.currency)}
 											</h4>
 										</div>
 									</div>
@@ -87,7 +93,7 @@ export default function Cart({ onClose }: CartProps) {
 							))}
 							<div className='flex justify-between pt-4 font-bold text-lg'>
 								<p>Total:</p>
-								<p>{formatPrice(totalPrice)}</p>
+								<p>{Array.from(totals, ([currency, total]) => formatPrice(total, currency)).join(' · ')}</p>
 							</div>
 							<Button size='lg' className='w-full h-14'>
 								Schedule Test Drive
