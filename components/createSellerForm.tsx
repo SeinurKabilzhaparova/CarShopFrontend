@@ -1,5 +1,7 @@
 'use client'
 
+import { API_URL } from '@/lib/api-url'
+
 import { Button } from '@/components/ui/button'
 import {
 	Field,
@@ -9,56 +11,55 @@ import {
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { CreateSellerFormSchema } from '@/lib/schemas'
-import { useAuthStore } from '@/store/authStore'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 import { useForm } from 'react-hook-form'
 import z from 'zod'
 
 type CreateSellerData = z.infer<typeof CreateSellerFormSchema>
 
-export default function CreateSellerForm() {
-	const router = useRouter()
-	const user = useAuthStore(x => x.user)
-	const token = useAuthStore(x => x.token)
+export default function CreateSellerForm({ token, onCreated }: { token: string; onCreated: () => void }) {
+	const [dealership, setDealership] = useState(false)
 
 	const {
 		register,
 		handleSubmit,
+		setError,
 		formState: { errors, isSubmitting }
 	} = useForm<CreateSellerData>({
 		resolver: zodResolver(CreateSellerFormSchema)
 	})
 
 	async function onSubmit(data: CreateSellerData) {
-		try {
-			if (!user || !token) {
-				router.push('/login')
-				return
+		if (dealership && !data.address?.trim()) {
+			setError('address', { message: 'Enter the dealership address' })
+			return
+		}
+
+		const payload = dealership
+			? {
+				companyName: data.companyName,
+				companyCity: data.city,
+				companyAddress: data.address,
+				companyPhoneNumber: data.mobilePhone,
+				companyEmail: data.email
 			}
-			const response = await fetch('http://localhost:5107/seller', {
+			: { name: data.companyName, city: data.city, phone: data.mobilePhone, email: data.email }
+
+		try {
+			const response = await fetch(`${API_URL}${dealership ? '/seller' : '/seller/private'}`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${token}`
 				},
-				body: JSON.stringify({
-					companyName: data.companyName,
-					UserID: user.id,
-					CompanyCity: data.city,
-					CompanyAddress: data.address,
-					CompanyPhoneNumber: data.mobilePhone,
-					CompanyEmail: data.email
-				})
+				body: JSON.stringify(payload)
 			})
-			if (!response.ok) {
-				throw new Error('Failed to create seller')
-			}
-			localStorage.setItem('sellerId', await response.json())
-			router.push('/seller/dashboard')
-		} catch (error) {
-			console.log(error)
+			if (!response.ok && response.status !== 409) throw new Error('Could not create seller profile')
+			onCreated()
+		} catch {
+			setError('root', { message: 'Could not create your seller profile. Please try again.' })
 		}
 	}
 	return (
@@ -71,8 +72,14 @@ export default function CreateSellerForm() {
 							<FieldDescription>Create your seller profile to list vehicles</FieldDescription>
 						</div>
 						<Field>
+							<label className='flex items-center gap-2'>
+								<input type='checkbox' checked={dealership} onChange={event => setDealership(event.target.checked)} />
+								I sell on behalf of a dealership
+							</label>
+						</Field>
+						<Field>
 							<FieldLabel htmlFor='companyName'>
-								Company Name or Full Name
+								{dealership ? 'Dealership name' : 'Full name'}
 							</FieldLabel>
 							<Input
 								id='companyName'
@@ -92,16 +99,18 @@ export default function CreateSellerForm() {
 							/>
 							{errors.city && <p className='mt-1 text-sm text-destructive'>{errors.city.message}</p>}
 						</Field>
-						<Field>
-							<FieldLabel htmlFor='companyAdress'>Company Address</FieldLabel>
-							<Input
-								id='companyAdress'
-								type='text'
-								placeholder='Dlouha 234'
-								{...register('address')}
-							/>
-							{errors.address && <p className='mt-1 text-sm text-destructive'>{errors.address.message}</p>}
-						</Field>
+						{dealership && (
+							<Field>
+								<FieldLabel htmlFor='companyAddress'>Company Address</FieldLabel>
+								<Input
+									id='companyAddress'
+									type='text'
+									placeholder='Dlouha 234'
+									{...register('address')}
+								/>
+								{errors.address && <p className='mt-1 text-sm text-destructive'>{errors.address.message}</p>}
+							</Field>
+						)}
 						<Field>
 							<FieldLabel htmlFor='mobilePhone'>Mobile Phone</FieldLabel>
 							<Input
@@ -124,6 +133,7 @@ export default function CreateSellerForm() {
 						</Field>
 
 						<Field>
+							{errors.root && <p role='alert' className='text-sm text-destructive'>{errors.root.message}</p>}
 							<Button type='submit' disabled={isSubmitting} size='lg' className='w-full'>
 								{isSubmitting ? 'Creating...' : 'Create Profile'}
 							</Button>

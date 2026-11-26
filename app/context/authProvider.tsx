@@ -1,4 +1,6 @@
 'use client'
+
+import { API_URL } from '@/lib/api-url'
 import { createContext, useContext, useEffect, useState } from 'react'
 
 export interface AuthUser {
@@ -10,10 +12,9 @@ interface AuthContextType {
 	user: AuthUser | null
 	token: string | null
 	Login: (email: string, password: string) => Promise<void>
-	Register: (password: string, email: string, role: string) => Promise<void>
+	Register: (email: string, password: string) => Promise<void>
 	Logout: () => void
 }
-const url = 'http://localhost:5107'
 const authContext = createContext<AuthContextType | null>(null)
 function decodeToken(token: string): AuthUser | null {
 	try {
@@ -42,7 +43,7 @@ async function postForm(
 ): Promise<string> {
 	const form = new FormData()
 	Object.entries(body).forEach(([key, value]) => form.append(key, value))
-	const token = await fetch(`${url}/api/auth/${apiEnd}`, {
+	const token = await fetch(`${API_URL}/api/auth/${apiEnd}`, {
 		method: 'POST',
 		body: form
 	})
@@ -72,8 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		setToken(t)
 		setUser(decodeToken(t))
 	}
-	async function Register(email: string, password: string, role: string) {
-		const t = await postForm('register', { email, password, role })
+	async function Register(email: string, password: string) {
+		const t = await postForm('register', { email, password })
 		localStorage.setItem('token', t)
 		setToken(t)
 		setUser(decodeToken(t))

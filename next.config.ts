@@ -1,21 +1,14 @@
 import type { NextConfig } from 'next'
+import { API_URL } from './lib/api-url'
 
 const nextConfig: NextConfig = {
-	/* config options here */
 	reactCompiler: true,
-  images: {
-		remotePatterns: [{
-      protocol:"https",
-      hostname:"images.unsplash.com",
-      port:"",
-      pathname:"/**"
-    }]
+	images: {
+		remotePatterns: [
+			new URL('https://images.unsplash.com/**'),
+			new URL(`${API_URL}/uploads/**`)
+		]
 	}
 }
-// module.exports = {
-// 	images: {
-// 		remotePatterns: [new URL('https://images.unsplash.com/photo**')]
-// 	}
-// }
 
 export default nextConfig

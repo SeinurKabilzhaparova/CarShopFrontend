@@ -7,6 +7,7 @@ import MessageSellerButton from '@/components/messageSellerButton'
 import { Button } from '@/components/ui/button'
 import { fetchListing, fetchListingById } from '@/lib/api'
 import { formatPrice } from '@/lib/cars'
+import { API_URL } from '@/lib/api-url'
 import { useQuery } from '@tanstack/react-query'
 import {
 	ArrowLeft,
@@ -108,6 +109,7 @@ export default  function CarDetail() {
 									{car.image ? (
 									<Image
 										src={car.image}
+						unoptimized={car.image.startsWith(`${API_URL}/uploads/`)}
 										alt={`${car.brand} ${car.name}`}
 										fill
 										className='object-cover'
@@ -138,7 +140,7 @@ export default  function CarDetail() {
 										Asking Price
 									</p>
 									<p className='mt-2 text-3xl font-bold tracking-tight md:text-4xl'>
-										{formatPrice(car.price)}
+										{formatPrice(car.price, car.currency)}
 									</p>
 									<div className='grid grid-cols-2 mt-6 gap-px bg-border border border-border'>
 										{specs.map(({ icon: Icon, label, key }) => (

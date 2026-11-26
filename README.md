@@ -2,6 +2,10 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+Run [CarShopBackend](https://github.com/SeinurKabilzhaparova/CarShopBackend) first. For local development the frontend defaults to `http://localhost:5107`. Set `NEXT_PUBLIC_API_URL` in `.env.local` to use a different API, including its HTTPS URL in production. The backend must allow the frontend origin for browser requests.
+
+The seller dashboard uses the authenticated seller and listing endpoints from [backend PR #1](https://github.com/SeinurKabilzhaparova/CarShopBackend/pull/1).
+
 First, run the development server:
 
 ```bash

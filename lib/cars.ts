@@ -4,6 +4,7 @@ export interface Car {
   brand: string
   year: number
   price: number
+  currency?: string
   
   image?: string
   featured?: boolean
@@ -15,10 +16,10 @@ export interface Car {
 }
 
 
-export function formatPrice(price: number): string {
+export function formatPrice(price: number, currency = 'USD'): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency,
     maximumFractionDigits: 0,
   }).format(price)
 }

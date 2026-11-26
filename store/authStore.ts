@@ -1,3 +1,4 @@
+import { API_URL } from '@/lib/api-url'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -10,10 +11,9 @@ interface AuthContextType {
 	user: AuthUser | null
 	token: string | null
 	Login: (email: string, password: string) => Promise<void>
-	Register: (password: string, email: string, role: string) => Promise<void>
+	Register: (email: string, password: string) => Promise<void>
 	Logout: () => void
 }
-const url = 'http://localhost:5107'
 function decodeToken(token: string): AuthUser | null {
 	try {
 		const payload = token.split('.')[1]
@@ -41,7 +41,7 @@ async function postForm(
 ): Promise<string> {
 	const form = new FormData()
 	Object.entries(body).forEach(([key, value]) => form.append(key, value))
-	const token = await fetch(`${url}/api/auth/${apiEnd}`, {
+	const token = await fetch(`${API_URL}/api/auth/${apiEnd}`, {
 		method: 'POST',
 		body: form
 	})
@@ -58,8 +58,8 @@ export const useAuthStore = create<AuthContextType>()(
 				const token = await postForm('login', { email, password })
 				set({ token, user: decodeToken(token) })
 			},
-			async Register(email, password, role) {
-				const token = await postForm('register', { email, password, role })
+			async Register(email, password) {
+				const token = await postForm('register', { email, password })
 				set({ token, user: decodeToken(token) })
 			},
 			Logout() {

@@ -13,6 +13,7 @@ const navLinks = [
 	{ href: '/about', label: 'about' },
 	{ href: '/contact', label: 'contact' },
 	{ href: '/inventory', label: 'inventory' },
+	{ href: '/seller/dashboard', label: 'sell a car' },
 	{ href: '/chats', label: 'chats' }
 ]
 

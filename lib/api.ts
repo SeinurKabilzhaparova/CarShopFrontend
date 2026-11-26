@@ -1,10 +1,10 @@
+import { API_URL, getListingPhotoUrl } from '@/lib/api-url'
 import { Car } from './cars'
 
 interface apiMoney {
 	amount: number
 	currency: string
 }
-const api = 'http://test.carshop.sailybaev.kz'
 
 // TODO: Replace with your Google Apps Script Web App URL after deployment.
 // See google-apps-script/README.md for setup instructions.
@@ -23,10 +23,10 @@ interface apiCar {
 	brand: string
 	model: string
 	year: number
-	mileage: string
-	transmission: string
-	fuelType: string
-	VIN: { value: string }
+	mileage?: string
+	transmission?: string
+	fuelType?: string
+	vin: { value: string }
 	price: apiMoney
 	status: number
 }
@@ -38,7 +38,7 @@ export interface apiListing {
 	carId: string
 	view: number
 	city: string
-	desc: string
+	description: string
 	carImages: string[]
 	listingStatus: number
 	createdAt: string
@@ -55,7 +55,8 @@ function ListingToCar(listing: apiListing): Car {
 		transmission: listing.car.transmission,
 		fuelType: listing.car.fuelType,
 		price: listing.car.price.amount,
-		image: firstImage,
+		currency: listing.car.price.currency,
+		image: firstImage ? getListingPhotoUrl(firstImage) : undefined,
 		featured: listing.status === 1,
 		sellerId: listing.sellerId
 	}
@@ -63,7 +64,7 @@ function ListingToCar(listing: apiListing): Car {
 
 export async function fetchListing(): Promise<Car[]> {
 	try {
-		const result = await fetch(`${api}/api/listing`, { cache: 'no-store' })
+		const result = await fetch(`${API_URL}/api/listing`, { cache: 'no-store' })
 		if (!result.ok) return []
 		const data: apiListing[] = await result.json()
 		return data.filter(d => d.car != null).map(ListingToCar)
@@ -74,7 +75,7 @@ export async function fetchListing(): Promise<Car[]> {
 
 export async function fetchListingById(id: string): Promise<Car | null> {
 	try {
-		const result = await fetch(`${api}/api/listing/${id}`, {
+		const result = await fetch(`${API_URL}/api/listing/${id}`, {
 			cache: 'no-store'
 		})
 		if (!result.ok) return null
